@@ -1,4 +1,4 @@
-# Copyright PaddlePaddle contributors. All Rights Reserved
+#   Copyright (c) 2018 PaddlePaddle Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import difflib
 import unittest
 
@@ -20,6 +21,8 @@ import paddle.v2.data_type as data_type
 import paddle.v2.layer as layer
 from paddle.trainer_config_helpers.config_parser_utils import \
     parse_network_config as parse_network
+from paddle.trainer_config_helpers.config_parser_utils import \
+    reset_parser
 
 
 class RNNTest(unittest.TestCase):
@@ -29,6 +32,8 @@ class RNNTest(unittest.TestCase):
         hidden_dim = 8
 
         def parse_old_rnn():
+            reset_parser()
+
             def step(y):
                 mem = conf_helps.memory(name="rnn_state", size=hidden_dim)
                 out = conf_helps.fc_layer(
@@ -42,11 +47,14 @@ class RNNTest(unittest.TestCase):
             def test():
                 data = conf_helps.data_layer(name="word", size=dict_dim)
                 embd = conf_helps.embedding_layer(input=data, size=word_dim)
-                conf_helps.recurrent_group(name="rnn", step=step, input=embd)
+                conf_helps.recurrent_group(
+                    name="rnn", step=step, input=embd, reverse=True)
 
             return str(parse_network(test))
 
         def parse_new_rnn():
+            reset_parser()
+
             def new_step(y):
                 mem = layer.memory(name="rnn_state", size=hidden_dim)
                 out = layer.fc(input=[y, mem],
@@ -60,7 +68,7 @@ class RNNTest(unittest.TestCase):
                 name="word", type=data_type.integer_value(dict_dim))
             embd = layer.embedding(input=data, size=word_dim)
             rnn_layer = layer.recurrent_group(
-                name="rnn", step=new_step, input=embd)
+                name="rnn", step=new_step, input=embd, reverse=True)
             return str(layer.parse_network(rnn_layer))
 
         diff = difflib.unified_diff(parse_old_rnn().splitlines(1),
@@ -74,6 +82,8 @@ class RNNTest(unittest.TestCase):
         label_dim = 3
 
         def parse_old_rnn():
+            reset_parser()
+
             def test():
                 data = conf_helps.data_layer(name="word", size=dict_dim)
                 label = conf_helps.data_layer(name="label", size=label_dim)
@@ -113,6 +123,7 @@ class RNNTest(unittest.TestCase):
             return str(parse_network(test))
 
         def parse_new_rnn():
+            reset_parser()
             data = layer.data(
                 name="word", type=data_type.dense_vector(dict_dim))
             label = layer.data(

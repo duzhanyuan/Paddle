@@ -116,7 +116,7 @@ class AdamOptimizer(BaseSGDOptimizer):
 
         m(w, t) & = \\beta_1 m(w, t-1) + (1 - \\beta_1) \\nabla Q_i(w) \\\\
         v(w, t) & = \\beta_2 v(w, t-1) + (1 - \\beta_2)(\\nabla Q_i(w)) ^2 \\\\
-        w & = w - \\frac{\\eta}{\\sqrt{v(w,t) + \\epsilon}}
+        w & = w - \\frac{\\eta m(w, t)}{\\sqrt{v(w,t) + \\epsilon}}
 
     :param beta1: the :math:`\\beta_1` in equation.
     :type beta1: float
@@ -361,6 +361,7 @@ def settings(batch_size,
              learning_rate_decay_b=0.,
              learning_rate_schedule='poly',
              learning_rate_args='',
+             async_lagged_grad_discard_ratio=1.5,
              learning_method=None,
              regularization=None,
              is_async=False,
@@ -396,6 +397,10 @@ def settings(batch_size,
                                         value larger than some value, will be
                                         clipped.
     :type gradient_clipping_threshold: float
+    :param async_lagged_grad_discard_ratio: async SGD gradient commit control,
+          when async_lagged_grad_discard_ratio * num_gradient_servers commit passed, 
+          the current async SGD gradient is discarded.
+    :type async_lagged_grad_discard_ratio: float
     """
     if isinstance(regularization, BaseRegularization):
         regularization = [regularization]
@@ -408,7 +413,8 @@ def settings(batch_size,
 
     args = [
         'batch_size', 'learning_rate', 'learning_rate_decay_a',
-        'learning_rate_decay_b', 'learning_rate_schedule', 'learning_rate_args'
+        'learning_rate_decay_b', 'learning_rate_schedule', 'learning_rate_args',
+        'gradient_clipping_threshold', 'async_lagged_grad_discard_ratio'
     ]
     kwargs = dict()
     kwargs['algorithm'] = algorithm

@@ -17,7 +17,8 @@ __all__ = [
     "IdentityActivation", "LinearActivation", 'SequenceSoftmaxActivation',
     'ExpActivation', "ReluActivation", "BReluActivation", "SoftReluActivation",
     "STanhActivation", "AbsActivation", "SquareActivation", "BaseActivation",
-    "LogActivation"
+    "LogActivation", "SqrtActivation", "ReciprocalActivation",
+    "SoftSignActivation"
 ]
 
 
@@ -76,7 +77,7 @@ class SoftmaxActivation(BaseActivation):
 
     .. math::
 
-       P(y=j|x) = \\frac{e^{x_j}} {\\sum^K_{k=1} e^{x_j} }
+       P(y=j|x) = \\frac{e^{x_j}} {\\sum^K_{k=1} e^{x_k} }
     """
 
     def __init__(self):
@@ -224,3 +225,39 @@ class LogActivation(BaseActivation):
 
     def __init__(self):
         BaseActivation.__init__(self, 'log', False)
+
+
+class SqrtActivation(BaseActivation):
+    """
+    Square Root Activation.
+
+    .. math::
+       f(z) = sqrt(z)
+    """
+
+    def __init__(self):
+        BaseActivation.__init__(self, 'sqrt', False)
+
+
+class ReciprocalActivation(BaseActivation):
+    """
+    Reciprocal Activation.
+
+    .. math::
+       f(z)=\\frac{1}{z}
+    """
+
+    def __init__(self):
+        BaseActivation.__init__(self, 'reciprocal', False)
+
+
+class SoftSignActivation(BaseActivation):
+    """
+    SoftSign Activation.
+
+    .. math::
+       f(z)=\\frac{z}{1 + |z|}
+    """
+
+    def __init__(self):
+        BaseActivation.__init__(self, 'softsign', False)

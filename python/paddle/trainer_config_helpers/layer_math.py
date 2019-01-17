@@ -40,6 +40,8 @@ register_unary_math_op('sigmoid', act.SigmoidActivation())
 register_unary_math_op('tanh', act.TanhActivation())
 register_unary_math_op('square', act.SquareActivation())
 register_unary_math_op('relu', act.ReluActivation())
+register_unary_math_op('sqrt', act.SqrtActivation())
+register_unary_math_op('reciprocal', act.ReciprocalActivation())
 
 
 def add(layeroutput, other):
@@ -73,7 +75,7 @@ LayerOutput.__add__ = add
 
 def sub(layeroutput, other):
     if is_compatible_with(other, float):
-        return slope_intercept_layer(input=layeroutput, intercept=other)
+        return slope_intercept_layer(input=layeroutput, intercept=-other)
     if not isinstance(other, LayerOutput):
         logger.fatal("LayerOutput can only be subtracted with"
                      " another Layeroutput or a number")

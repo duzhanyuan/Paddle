@@ -21,7 +21,7 @@ import paddle.v2.dataset.common
 import subprocess
 import numpy
 import platform
-__all__ = ['train', 'test']
+__all__ = ['train', 'test', 'convert']
 
 URL_PREFIX = 'http://yann.lecun.com/exdb/mnist/'
 TEST_IMAGE_URL = URL_PREFIX + 't10k-images-idx3-ubyte.gz'
@@ -68,8 +68,14 @@ def reader_creator(image_filename, label_filename, buffer_size):
                 for i in xrange(buffer_size):
                     yield images[i, :], int(labels[i])
         finally:
-            m.terminate()
-            l.terminate()
+            try:
+                m.terminate()
+            except:
+                pass
+            try:
+                l.terminate()
+            except:
+                pass
 
     return reader
 
@@ -112,4 +118,12 @@ def fetch():
     paddle.v2.dataset.common.download(TRAIN_IMAGE_URL, 'mnist', TRAIN_IMAGE_MD5)
     paddle.v2.dataset.common.download(TRAIN_LABEL_URL, 'mnist', TRAIN_LABEL_MD5)
     paddle.v2.dataset.common.download(TEST_IMAGE_URL, 'mnist', TEST_IMAGE_MD5)
-    paddle.v2.dataset.common.download(TEST_LABEL_URL, 'mnist', TRAIN_LABEL_MD5)
+    paddle.v2.dataset.common.download(TEST_LABEL_URL, 'mnist', TEST_LABEL_MD5)
+
+
+def convert(path):
+    """
+    Converts dataset to recordio format
+    """
+    paddle.v2.dataset.common.convert(path, train(), 1000, "minist_train")
+    paddle.v2.dataset.common.convert(path, test(), 1000, "minist_test")

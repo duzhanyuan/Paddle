@@ -31,10 +31,10 @@ images per class.
 import cPickle
 import itertools
 import numpy
-from common import download
+import paddle.v2.dataset.common
 import tarfile
 
-__all__ = ['train100', 'test100', 'train10', 'test10']
+__all__ = ['train100', 'test100', 'train10', 'test10', 'convert']
 
 URL_PREFIX = 'https://www.cs.toronto.edu/~kriz/'
 CIFAR10_URL = URL_PREFIX + 'cifar-10-python.tar.gz'
@@ -43,7 +43,7 @@ CIFAR100_URL = URL_PREFIX + 'cifar-100-python.tar.gz'
 CIFAR100_MD5 = 'eb9058c3a382ffc7106e4002c42a8d85'
 
 
-def reader_creator(filename, sub_name):
+def reader_creator(filename, sub_name, cycle=False):
     def read_batch(batch):
         data = batch['data']
         labels = batch.get('labels', batch.get('fine_labels', None))
@@ -56,10 +56,13 @@ def reader_creator(filename, sub_name):
             names = (each_item.name for each_item in f
                      if sub_name in each_item.name)
 
-            for name in names:
-                batch = cPickle.load(f.extractfile(name))
-                for item in read_batch(batch):
-                    yield item
+            while True:
+                for name in names:
+                    batch = cPickle.load(f.extractfile(name))
+                    for item in read_batch(batch):
+                        yield item
+                if not cycle:
+                    break
 
     return reader
 
@@ -75,7 +78,8 @@ def train100():
     :rtype: callable
     """
     return reader_creator(
-        download(CIFAR100_URL, 'cifar', CIFAR100_MD5), 'train')
+        paddle.v2.dataset.common.download(CIFAR100_URL, 'cifar', CIFAR100_MD5),
+        'train')
 
 
 def test100():
@@ -88,37 +92,57 @@ def test100():
     :return: Test reader creator.
     :rtype: callable
     """
-    return reader_creator(download(CIFAR100_URL, 'cifar', CIFAR100_MD5), 'test')
+    return reader_creator(
+        paddle.v2.dataset.common.download(CIFAR100_URL, 'cifar', CIFAR100_MD5),
+        'test')
 
 
-def train10():
+def train10(cycle=False):
     """
     CIFAR-10 training set creator.
 
     It returns a reader creator, each sample in the reader is image pixels in
     [0, 1] and label in [0, 9].
 
+    :param cycle: whether to cycle through the dataset
+    :type cycle: bool
     :return: Training reader creator
     :rtype: callable
     """
     return reader_creator(
-        download(CIFAR10_URL, 'cifar', CIFAR10_MD5), 'data_batch')
+        paddle.v2.dataset.common.download(CIFAR10_URL, 'cifar', CIFAR10_MD5),
+        'data_batch',
+        cycle=cycle)
 
 
-def test10():
+def test10(cycle=False):
     """
     CIFAR-10 test set creator.
 
     It returns a reader creator, each sample in the reader is image pixels in
     [0, 1] and label in [0, 9].
 
+    :param cycle: whether to cycle through the dataset
+    :type cycle: bool
     :return: Test reader creator.
     :rtype: callable
     """
     return reader_creator(
-        download(CIFAR10_URL, 'cifar', CIFAR10_MD5), 'test_batch')
+        paddle.v2.dataset.common.download(CIFAR10_URL, 'cifar', CIFAR10_MD5),
+        'test_batch',
+        cycle=cycle)
 
 
 def fetch():
-    download(CIFAR10_URL, 'cifar', CIFAR10_MD5)
-    download(CIFAR100_URL, 'cifar', CIFAR100_MD5)
+    paddle.v2.dataset.common.download(CIFAR10_URL, 'cifar', CIFAR10_MD5)
+    paddle.v2.dataset.common.download(CIFAR100_URL, 'cifar', CIFAR100_MD5)
+
+
+def convert(path):
+    """
+    Converts dataset to recordio format
+    """
+    paddle.v2.dataset.common.convert(path, train100(), 1000, "cifar_train100")
+    paddle.v2.dataset.common.convert(path, test100(), 1000, "cifar_test100")
+    paddle.v2.dataset.common.convert(path, train10(), 1000, "cifar_train10")
+    paddle.v2.dataset.common.convert(path, test10(), 1000, "cifar_test10")
